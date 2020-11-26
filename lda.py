@@ -4,8 +4,8 @@
 ## call data from csv and drop bad lines
 import pandas as pd
 
-data = pd.read_csv('/Users/kayeanndelasalas/Documents/Github/LDA/abcnews-date-text.csv', error_bad_lines=False) #data from kaggle
-data_text = data.drop(['publish_date'], axis=1)
+data_text = pd.read_csv('/Users/kayeanndelasalas/Documents/Github/LDA/articles.csv', error_bad_lines=False) #data from kaggle
+#data_text = data.drop(['publish_date'], axis=1)
 data_text['index'] = data_text.index
 doc = data_text
 
@@ -47,7 +47,7 @@ def preprocess(text): ##check if not in stopword then lemmatize and stem
 # print(preprocess(doc_sample))
 
 
-processed_docs = doc['headline_text'].map(preprocess)
+processed_docs = doc['text'].map(preprocess)
 
 ## create bag of words
 
@@ -56,11 +56,11 @@ dictionary = gensim.corpora.Dictionary(processed_docs)
 ##check dictionary
 
 # count = 0
-# for k, v in dictionary.iteritems():
-#     print(k, v)
-#     count += 1
-#     if count > 10:
-#         break
+#  for k, v in dictionary.iteritems():
+#      print(k, v)
+#      count += 1
+#      if count > 10:
+#          break
 
 
 ## Filter out tokens that appear in
@@ -68,7 +68,7 @@ dictionary = gensim.corpora.Dictionary(processed_docs)
 ### more than 0.5 documents (fraction of total corpus size, not absolute number).
 ### after the above two steps, keep only the first 100000 most frequent tokens.
 
-dictionary.filter_extremes(no_below=15, no_above=0.5, keep_n=100000)
+dictionary.filter_extremes(no_below=1, no_above=0.5, keep_n=1000)
 
 ## how many words and how many times those words appear for each doc
 
@@ -113,12 +113,12 @@ for idx, topic in lda_model_tfidf.print_topics(-1):
 ## performance evaluation bag of words
 #processed_docs[4310]
 
-for index, score in sorted(lda_model[bow_corpus[4310]], key=lambda tup: -1*tup[1]):
+for index, score in sorted(lda_model[bow_corpus[0]], key=lambda tup: -1*tup[1]):
     print("\nScore: {}\t \nTopic: {}".format(score, lda_model.print_topic(index, 10)))
 
 ## performance evaluation tfidf
 
-for index, score in sorted(lda_model_tfidf[bow_corpus[4310]], key=lambda tup: -1*tup[1]):
+for index, score in sorted(lda_model_tfidf[bow_corpus[0]], key=lambda tup: -1*tup[1]):
     print("\nScore: {}\t \nTopic: {}".format(score, lda_model_tfidf.print_topic(index, 10)))
 
 ## testing
