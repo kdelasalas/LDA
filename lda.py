@@ -3,16 +3,38 @@
 
 ## call data from csv and drop bad lines
 import pandas as pd
+import os
 
-data_text = pd.read_csv('/Users/kayeanndelasalas/Documents/Github/LDA/articles.csv', error_bad_lines=False) #data from kaggle
+#data_text_full = pd.read_csv('/Users/kayeanndelasalas/Documents/Github/LDA/gigalife_reviews/reviews_reviews_com.smart.consumer.app_202003.csv', error_bad_lines=False, quoting=3) #data from kaggle
 #data_text = data.drop(['publish_date'], axis=1)
+#names=cols, skiprows=[0], quoting=3, quotechar='"'
+data_text_full = pd.DataFrame()
+path = '/Users/kayeanndelasalas/Documents/Github/LDA/gigalife_reviews/'
+files = os.listdir(path)
+cols = ['Package Name','App Version Code','App Version Name','Reviewer Language','Device','Review Submit Date and Time','Review Submit Millis Since Epoch','Review Last Update Date and Time','Review Last Update Millis Since Epoch','Star Rating','Review Title','Review Text','Developer Reply Date and Time','Developer Reply Millis Since Epoch','Developer Reply Text','Review Link']
+for file in files:
+    if not file.startswith('.'):
+        try:
+            a = str(path)+str(file)
+            x = pd.read_csv(a, encoding = 'utf-8')
+            data_text_full = data_text_full.append(x, ignore_index = True, sort = False)
+        except pd.errors.EmptyDataError:
+            print("Found empty file : "+str(i)+"-"+str(file))
+
+data_good = data_text_full[data_text_full['Star Rating']>=3]
+data_bad = data_text_full[data_text_full['Star Rating']<3]
+
+data_text = data_bad[['Review Text']]
+data_text.dropna(inplace=True)
+data_text.reset_index(drop=True, inplace=True)
+data_text = data_text[~data_text['Review Text'].astype(str).str.startswith('2020-')].reset_index(drop=True)
 data_text['index'] = data_text.index
 doc = data_text
 
 ##preprocess
 import gensim
-from gensim.utils import simple_preprocess
-from gensim.parsing.preprocessing import STOPWORDS
+#from gensim.utils import simple_preprocess
+#from gensim.parsing.preprocessing import STOPWORDS
 from nltk.stem import WordNetLemmatizer, SnowballStemmer
 from nltk.stem.porter import *
 import numpy as np
@@ -47,7 +69,7 @@ def preprocess(text): ##check if not in stopword then lemmatize and stem
 # print(preprocess(doc_sample))
 
 
-processed_docs = doc['text'].map(preprocess)
+processed_docs = doc['Review Text'].fillna('').astype(str).map(preprocess)
 
 ## create bag of words
 
@@ -55,12 +77,12 @@ dictionary = gensim.corpora.Dictionary(processed_docs)
 
 ##check dictionary
 
-# count = 0
-#  for k, v in dictionary.iteritems():
-#      print(k, v)
-#      count += 1
-#      if count > 10:
-#          break
+count = 0
+  for k, v in dictionary.iteritems():
+      print(k, v)
+      count += 1
+      if count > 10:
+          break
 
 
 ## Filter out tokens that appear in
@@ -68,7 +90,7 @@ dictionary = gensim.corpora.Dictionary(processed_docs)
 ### more than 0.5 documents (fraction of total corpus size, not absolute number).
 ### after the above two steps, keep only the first 100000 most frequent tokens.
 
-dictionary.filter_extremes(no_below=1, no_above=0.5, keep_n=1000)
+dictionary.filter_extremes(no_below=1, no_above=0.5, keep_n=10000)
 
 ## how many words and how many times those words appear for each doc
 
@@ -77,11 +99,11 @@ bow_corpus = [dictionary.doc2bow(x) for x in processed_docs]
 #check
 #bow_corpus[4310]
 
-# bow_doc_4310 = bow_corpus[4310]
-# for i in range(len(bow_doc_4310)):
+#bow_doc_4310 = bow_corpus[4310]
+#for i in range(len(bow_doc_4310)):
 #     print("Word {} (\"{}\") appears {} time.".format(bow_doc_4310[i][0],
 #                                                dictionary[bow_doc_4310[i][0]],
-# bow_doc_4310[i][1]))
+#                                                      bow_doc_4310[i][1]))
 
 
 ## TFIDF
@@ -99,14 +121,14 @@ for x in corpus_tfidf:
 ## Running LDA using bag of words
 ### Train our lda model using gensim.models.LdaMulticore
 
-lda_model = gensim.models.LdaMulticore(bow_corpus, num_topics=10, id2word=dictionary, passes=2, workers=2)
+lda_model = gensim.models.LdaMulticore(bow_corpus, num_topics=4, id2word=dictionary, passes=2, workers=2)
 
 for idx, topic in lda_model.print_topics(-1):
     print('Topic: {} \nWords: {}'.format(idx, topic))
 
 ## Running LDA using TFIDF
 
-lda_model_tfidf = gensim.models.LdaMulticore(corpus_tfidf, num_topics=10, id2word=dictionary, passes=2, workers=4)
+lda_model_tfidf = gensim.models.LdaMulticore(corpus_tfidf, num_topics=4, id2word=dictionary, passes=2, workers=4)
 for idx, topic in lda_model_tfidf.print_topics(-1):
     print('Topic: {} Word: {}'.format(idx, topic))
 

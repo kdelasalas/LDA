@@ -22,3 +22,6 @@ articles.csv sources:
 'https://www.gizguide.com/2020/10/smart-park-seo-joon-giga-k-video-promo.html?m=1',
 'https://www.gmanetwork.com/news/lifestyle/hobbiesandactivities/761758/park-seo-jun-speaks-tagalog-in-new-phl-telco-commercial/story/?amp#click=https://t.co/bOxpEYlVeh',
 'https://www.hallyudorama.com/park-seo-joon-is-smart-endorser-for-giga-k-video-with-viu-premium/'s
+
+
+New set of data from google play review, only rating and review text was uploaded.
